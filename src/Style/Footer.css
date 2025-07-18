@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&display=swap');
+
+
+.footer {
+  background: #fdf6f6;
+  color: #4a2c3f;
+  padding: 60px 40px 30px;
+  font-family: 'Poppins', sans-serif;
+  border-top: 1px solid #e6d6db;
+}
+
+
+.footer-columns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+
+.footer-section {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+
+.footer-section h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: #a2497b;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e3c3cc;
+  padding-bottom: 6px;
+}
+
+
+.footer-section p,
+.footer-section a {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #5e3b4c;
+  text-decoration: none;
+  font-weight: 400;
+}
+
+
+.footer-section a:hover {
+  color: #b04572;
+  text-decoration: underline;
+}
+
+
+.footer-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+
+.footer-nav-list li {
+  margin-bottom: 6px;
+}
+
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  border-radius: 10%;
+}
+
+
+.social-icons img {
+  width: 26px;
+  height: 26px;
+  filter: grayscale(100%);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+
+.social-icons img:hover {
+  filter: grayscale(0%);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+
+.footer-note {
+  width: 100%;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 0.9rem;
+  color: #8a6171;
+  border-top: 1px solid #e6d6db;
+  padding-top: 20px;
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
+
+/* Responsive */
+@media screen and (max-width: 850px) {
+  .footer-columns {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+
+  .footer-section {
+    margin-bottom: 25px;
+  }
+
+
+  .social-icons {
+    justify-content: center;
+  }
+}
+
