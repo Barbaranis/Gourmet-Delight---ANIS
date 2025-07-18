@@ -1,7 +1,9 @@
+//src/pages/GestionPlats.jsx
+
+
 import React, { useState, useEffect } from 'react';
 import api from '../axiosConfig';
 import '../Style/GestionPlats.css';
-
 
 const CATEGORIES = [
   { id: 1, nom: 'Entrée' },
@@ -9,7 +11,6 @@ const CATEGORIES = [
   { id: 3, nom: 'Dessert' },
   { id: 4, nom: 'Boisson' },
 ];
-
 
 const GestionPlats = () => {
   const [plats, setPlats] = useState([]);
@@ -24,14 +25,11 @@ const GestionPlats = () => {
   const [editMode, setEditMode] = useState(false);
   const [editId, setEditId] = useState(null);
 
-
   const role = localStorage.getItem('role');
-
 
   useEffect(() => {
     fetchPlats();
   }, []);
-
 
   const fetchPlats = async () => {
     try {
@@ -42,16 +40,13 @@ const GestionPlats = () => {
     }
   };
 
-
   const handleChange = (e) => {
     setNewPlat({ ...newPlat, [e.target.name]: e.target.value });
   };
 
-
   const handleFileChange = (e) => {
     setImageFile(e.target.files[0]);
   };
-
 
   const handleEdit = (plat) => {
     setEditMode(true);
@@ -66,7 +61,6 @@ const GestionPlats = () => {
     setMessage('✏️ Modification du plat en cours...');
   };
 
-
   const resetForm = () => {
     setNewPlat({ nom: '', description: '', prix: '', id_categorie: '' });
     setImageFile(null);
@@ -75,10 +69,8 @@ const GestionPlats = () => {
     setMessage('');
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
 
     try {
       const formData = new FormData();
@@ -88,27 +80,23 @@ const GestionPlats = () => {
       formData.append('id_categorie', Number(newPlat.id_categorie));
       if (imageFile) formData.append('image', imageFile);
 
+      const config = {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      };
 
       if (editMode && editId) {
-        await api.put(`/api/plats/${editId}`, formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        await api.put(`/api/plats/${editId}`, formData, config);
         setMessage('✅ Plat mis à jour avec succès.');
       } else {
         if (!imageFile) {
           setMessage('❌ L’image est obligatoire.');
           return;
         }
-        await api.post('/api/plats', formData, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        await api.post('/api/plats', formData, config);
         setMessage('✅ Plat ajouté avec succès.');
       }
-
 
       resetForm();
       fetchPlats();
@@ -117,7 +105,6 @@ const GestionPlats = () => {
       setMessage('❌ Une erreur est survenue.');
     }
   };
-
 
   const handleDelete = async (id) => {
     try {
@@ -130,56 +117,47 @@ const GestionPlats = () => {
     }
   };
 
-
   const getCategorieNom = (id) => {
     const cat = CATEGORIES.find((c) => c.id === id);
     return cat ? cat.nom : 'Inconnue';
   };
 
-
   if (role !== 'admin' && role !== 'chef_cuisine') {
     return <p className="forbidden">⛔ Accès interdit.</p>;
   }
-
 
   return (
     <div className="gestion-plats">
       <h2>🍽️ Gérer les Plats</h2>
 
-
       <form onSubmit={handleSubmit} className="form-plat" encType="multipart/form-data">
         <input name="nom" placeholder="Nom" value={newPlat.nom} onChange={handleChange} required />
         <input name="description" placeholder="Description" value={newPlat.description} onChange={handleChange} />
         <input name="prix" placeholder="Prix (€)" value={newPlat.prix} onChange={handleChange} type="number" step="0.01" required />
-        
-        {/* Image actuelle si en mode édition */}
+
         {editMode && editId && (
           <div className="current-image-preview">
             <p>Image actuelle :</p>
             <img
-              src={`http://localhost:3000/uploads/${plats.find(p => p.id_plat === editId)?.image_url}`}
-              alt="Image actuelle"
+              src={`/uploads/${plats.find(p => p.id_plat === editId)?.image_url}`}
+              alt="Image actuelle du plat"
               className="miniature-image"
             />
           </div>
         )}
 
-
         <input type="file" accept="image/*" onChange={handleFileChange} />
 
-
-        {/* Nouvelle image sélectionnée */}
         {imageFile && (
           <div className="preview-image">
             <p>Nouvelle image sélectionnée :</p>
             <img
               src={URL.createObjectURL(imageFile)}
-              alt="Aperçu"
+              alt="Aperçu de la nouvelle image"
               className="miniature-image"
             />
           </div>
         )}
-
 
         <select name="id_categorie" value={newPlat.id_categorie} onChange={handleChange} required>
           <option value="">-- Sélectionner une catégorie --</option>
@@ -188,19 +166,20 @@ const GestionPlats = () => {
           ))}
         </select>
 
-
         <button type="submit">{editMode ? 'Mettre à jour' : 'Ajouter le plat'}</button>
         {editMode && <button type="button" onClick={resetForm}>Annuler</button>}
       </form>
 
-
       {message && <p className="message">{message}</p>}
-
 
       <ul className="liste-plats">
         {plats.map((plat) => (
           <li key={plat.id_plat} className="plat-item">
-            <img src={`http://localhost:3000/uploads/${plat.image_url}`} alt={plat.nom} className="plat-image" />
+            <img
+              src={`/uploads/${plat.image_url}`}
+              alt={`Image du plat ${plat.nom}`}
+              className="plat-image"
+            />
             <div>
               <strong>{plat.nom}</strong> – {plat.prix} €<br />
               <em>{getCategorieNom(plat.id_categorie)}</em>
@@ -215,6 +194,4 @@ const GestionPlats = () => {
   );
 };
 
-
 export default GestionPlats;
-

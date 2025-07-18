@@ -1,10 +1,7 @@
-// src/pages/Menu.jsx
-// Petite modif pour déclencher Netlify
-
-
 import React, { useEffect, useState } from 'react';
 import api from '../axiosConfig';
 import '../Style/Menu.css';
+
 
 const CATEGORIES = {
   1: 'Entrées',
@@ -13,9 +10,11 @@ const CATEGORIES = {
   4: 'Boissons',
 };
 
+
 export default function Menu() {
   const [menuData, setMenuData] = useState({});
   const [activeTab, setActiveTab] = useState('Entrées');
+
 
   useEffect(() => {
     api.get('/api/plats')
@@ -25,19 +24,25 @@ export default function Menu() {
           const nomCat = CATEGORIES[plat.id_categorie] || 'Autres';
           if (!grouped[nomCat]) grouped[nomCat] = [];
 
+
           grouped[nomCat].push({
             id: plat.id_plat,
             name: plat.nom,
             description: plat.description,
             price: `${plat.prix}€`,
-            image_url: plat.image_url ? `http://localhost:3000/uploads/${plat.image_url}` : null,
+            image_url: plat.image_url 
+              ? `http://localhost:3000/uploads/${plat.image_url}` 
+              // ? `/uploads/${plat.image_url}` // version si hébergé ailleurs
+              : null,
           });
-          
         });
         setMenuData(grouped);
       })
-      .catch((err) => console.error("❌ Erreur chargement menu :", err));
+      .catch((err) => {
+        console.error("❌ Erreur chargement menu :", err);
+      });
   }, []);
+
 
   return (
     <main className="menu-container">
@@ -49,7 +54,8 @@ export default function Menu() {
         </p>
       </section>
 
-      <nav className="menu-tabs" aria-label="Catégories du menu">
+
+      <nav className="menu-tabs" role="tablist" aria-label="Catégories du menu">
         {Object.keys(menuData).map((category) => (
           <button
             key={category}
@@ -57,11 +63,13 @@ export default function Menu() {
             className={activeTab === category ? 'active' : ''}
             aria-selected={activeTab === category}
             role="tab"
+            id={`tab-${category}`}
           >
             {category}
           </button>
         ))}
       </nav>
+
 
       <section
         className="menu-content"
@@ -69,13 +77,13 @@ export default function Menu() {
         aria-labelledby={`tab-${activeTab}`}
         tabIndex={0}
       >
-        {menuData[activeTab] ? (
+        {menuData[activeTab]?.length > 0 ? (
           menuData[activeTab].map(({ id, name, description, price, image_url }) => (
             <article key={id} className="menu-item">
               {image_url && (
                 <img
                   src={image_url}
-                  alt={`Photo de ${name}`}
+                  alt={`Image du plat ${name}`}
                   className="menu-item-image"
                 />
               )}
@@ -87,7 +95,7 @@ export default function Menu() {
             </article>
           ))
         ) : (
-          <p>Chargement des plats...</p>
+          <p>Aucun plat disponible pour cette catégorie.</p>
         )}
       </section>
     </main>
