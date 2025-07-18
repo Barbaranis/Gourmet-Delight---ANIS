@@ -46,7 +46,17 @@ exports.createPlat = async (req, res) => {
     });
 
 
-    await firestore.collection('plats').doc(plat.id_plat.toString()).set({
+    console.log("🧾 Plat créé :", plat);
+
+
+    // Vérification de l'ID
+    const idPlat = plat.id_plat || plat.id; // au cas où Sequelize utiliserait "id" au lieu de "id_plat"
+    if (!idPlat) {
+      return res.status(500).json({ message: "Erreur : ID du plat introuvable après création." });
+    }
+
+
+    await firestore.collection('plats').doc(idPlat.toString()).set({
       nom,
       description,
       prix: prixFloat,
@@ -58,6 +68,7 @@ exports.createPlat = async (req, res) => {
 
     res.status(201).json(plat);
   } catch (err) {
+    console.error("❌ Erreur serveur createPlat:", err);
     res.status(500).json({ message: "Erreur création plat", error: err.message });
   }
 };
@@ -74,7 +85,7 @@ exports.getAllPlats = async (req, res) => {
 };
 
 
-// ✅ Mettre à jour un plat (avec ou sans nouvelle image)
+// ✅ Mettre à jour un plat
 exports.updatePlat = async (req, res) => {
   try {
     const { id } = req.params;
@@ -129,6 +140,7 @@ exports.updatePlat = async (req, res) => {
 
     res.status(200).json({ message: "Plat mis à jour avec succès." });
   } catch (err) {
+    console.error("❌ Erreur updatePlat:", err);
     res.status(500).json({ message: "Erreur mise à jour plat", error: err.message });
   }
 };
@@ -156,6 +168,7 @@ exports.deletePlat = async (req, res) => {
 
     res.status(200).json({ message: "Plat supprimé avec succès." });
   } catch (err) {
+    console.error("❌ Erreur deletePlat:", err);
     res.status(500).json({ message: "Erreur suppression plat", error: err.message });
   }
 };
