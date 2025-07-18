@@ -3,17 +3,17 @@ const Plat = db.Plat;
 const Categorie = db.Categorie;
 
 
-// ✅ Créer un plat avec image uploadée
+const { firestore } = require('../config/firebaseAdmin');
+const fs = require('fs');
+const path = require('path');
+
+
+// ✅ Créer un plat avec image
 exports.createPlat = async (req, res) => {
   try {
-    console.log("📦 Données reçues :", req.body);
-    console.log("📷 Fichier image :", req.file);
-
-
     const { nom, description, prix, id_categorie } = req.body;
 
 
-    // Vérifications de base
     if (!nom || !prix || !id_categorie || !req.file) {
       return res.status(400).json({ message: "Tous les champs sont requis, y compris l'image." });
     }
@@ -28,19 +28,13 @@ exports.createPlat = async (req, res) => {
     }
 
 
-    // Vérification que la catégorie existe
     const categorieExiste = await Categorie.findByPk(categorieId);
     if (!categorieExiste) {
       return res.status(400).json({ message: "La catégorie sélectionnée n'existe pas." });
     }
 
 
-    // Chemin de l’image (assure-toi que le dossier uploads est servi statiquement dans server.js)
     const image_url = req.file.filename;
-
-
-
-
 
 
     const plat = await Plat.create({
@@ -52,10 +46,18 @@ exports.createPlat = async (req, res) => {
     });
 
 
-    console.log("✅ Plat créé :", plat);
+    await firestore.collection('plats').doc(plat.id_plat.toString()).set({
+      nom,
+      description,
+      prix: prixFloat,
+      image_url,
+      id_categorie: categorieId,
+      createdAt: new Date().toISOString()
+    });
+
+
     res.status(201).json(plat);
   } catch (err) {
-    console.error("❌ Erreur création plat :", err);
     res.status(500).json({ message: "Erreur création plat", error: err.message });
   }
 };
@@ -67,29 +69,66 @@ exports.getAllPlats = async (req, res) => {
     const plats = await Plat.findAll();
     res.status(200).json(plats);
   } catch (err) {
-    console.error("❌ Erreur récupération plats :", err);
     res.status(500).json({ message: "Erreur récupération plats", error: err.message });
   }
 };
 
 
-// ✅ Mettre à jour un plat
+// ✅ Mettre à jour un plat (avec ou sans nouvelle image)
 exports.updatePlat = async (req, res) => {
   try {
     const { id } = req.params;
-
-
-    const [updated] = await Plat.update(req.body, { where: { id_plat: id } });
-
-
-    if (updated === 0) {
-      return res.status(404).json({ message: "Aucun plat trouvé avec cet ID." });
+    const plat = await Plat.findByPk(id);
+    if (!plat) {
+      return res.status(404).json({ message: "Plat non trouvé." });
     }
+
+
+    const { nom, description, prix, id_categorie } = req.body;
+    const prixFloat = parseFloat(prix);
+    const categorieId = parseInt(id_categorie);
+
+
+    if (isNaN(prixFloat) || isNaN(categorieId)) {
+      return res.status(400).json({ message: "Le prix et la catégorie doivent être valides." });
+    }
+
+
+    let image_url = plat.image_url;
+
+
+    if (req.file) {
+      const oldImagePath = path.join(__dirname, '..', 'uploads', plat.image_url);
+      fs.unlink(oldImagePath, (err) => {
+        if (err) console.warn("⚠️ Erreur suppression ancienne image :", err.message);
+      });
+      image_url = req.file.filename;
+    }
+
+
+    await Plat.update({
+      nom,
+      description,
+      prix: prixFloat,
+      image_url,
+      id_categorie: categorieId
+    }, {
+      where: { id_plat: id }
+    });
+
+
+    await firestore.collection('plats').doc(id.toString()).update({
+      nom,
+      description,
+      prix: prixFloat,
+      image_url,
+      id_categorie: categorieId,
+      updatedAt: new Date().toISOString()
+    });
 
 
     res.status(200).json({ message: "Plat mis à jour avec succès." });
   } catch (err) {
-    console.error("❌ Erreur mise à jour plat :", err);
     res.status(500).json({ message: "Erreur mise à jour plat", error: err.message });
   }
 };
@@ -99,19 +138,24 @@ exports.updatePlat = async (req, res) => {
 exports.deletePlat = async (req, res) => {
   try {
     const { id } = req.params;
-
-
-    const deleted = await Plat.destroy({ where: { id_plat: id } });
-
-
-    if (deleted === 0) {
+    const plat = await Plat.findByPk(id);
+    if (!plat) {
       return res.status(404).json({ message: "Aucun plat trouvé à supprimer." });
     }
 
 
+    const imagePath = path.join(__dirname, '..', 'uploads', plat.image_url);
+    fs.unlink(imagePath, (err) => {
+      if (err) console.warn("⚠️ Image non supprimée :", err.message);
+    });
+
+
+    await Plat.destroy({ where: { id_plat: id } });
+    await firestore.collection('plats').doc(id.toString()).delete();
+
+
     res.status(200).json({ message: "Plat supprimé avec succès." });
   } catch (err) {
-    console.error("❌ Erreur suppression plat :", err);
     res.status(500).json({ message: "Erreur suppression plat", error: err.message });
   }
 };
