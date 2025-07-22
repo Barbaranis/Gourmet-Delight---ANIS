@@ -7,3 +7,6 @@ node_modules/
 # backend/.gitignore
 
 .serviceAccountKey.json
+backend/src/models/serviceAccountKey.json
+
+
