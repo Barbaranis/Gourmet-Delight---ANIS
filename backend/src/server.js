@@ -1,4 +1,6 @@
+
 //src/server.js
+
 
 
 
@@ -6,9 +8,11 @@
 require('dotenv').config();
 
 
+
 // ------------------------------
 // Imports
 // ------------------------------
+
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -20,6 +24,7 @@ const path = require('path');
 
 
 const app = express();
+
 const sequelize = require('./config/db');
 
 
@@ -76,6 +81,7 @@ app.get('/api/csrf-token', (req, res) => {
 app.use('/uploads', express.static(path.join(__dirname, '/src/uploads')));
 
 
+
 // ------------------------------
 // ROUTES API
 // ------------------------------
@@ -88,9 +94,11 @@ app.use('/api/contact', require('./routes/contact'));
 // ------------------------------
 // Test
 // ------------------------------
+
 app.get('/', (req, res) => {
   res.send('✅ Serveur backend actif 🍽️');
 });
+
 
 
 // ------------------------------
@@ -99,6 +107,8 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`🚀 Serveur backend lancé sur http://localhost:${PORT}`);
+
+
   try {
     await sequelize.sync();
     console.log('✅ Modèles Sequelize synchronisés avec la base PostgreSQL.');

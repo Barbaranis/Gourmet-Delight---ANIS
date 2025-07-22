@@ -16,6 +16,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 
+
+
 // ✅ ROUTES
 
 
@@ -27,8 +29,8 @@ router.get('/', controller.getAllPlats);
 router.post('/', verifyToken, restrictTo('admin', 'chef_cuisine'), upload.single('image'), controller.createPlat);
 
 
-// ✏️ Modification plat (admin ou chef)
-router.put('/:id', verifyToken, restrictTo('admin', 'chef_cuisine'), controller.updatePlat);
+// ✏️ Modification plat (admin ou chef) — CORRIGÉ ICI ⬇️
+router.put('/:id', verifyToken, restrictTo('admin', 'chef_cuisine'), upload.single('image'), controller.updatePlat);
 
 
 // ❌ Suppression plat (admin ou chef)

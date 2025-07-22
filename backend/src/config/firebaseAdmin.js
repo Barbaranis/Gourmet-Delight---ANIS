@@ -1,3 +1,4 @@
+
 // ✅ backend/src/config/firebaseAdmin.js
 
 
@@ -15,4 +16,3 @@ initializeApp({
 // 📦 Export de l'instance Firestore
 const db = getFirestore();
 module.exports = db;
-
