@@ -1,66 +1,109 @@
-//server.js
+//src/server.js
 
 
-// 🌿 Chargement du fichier .env pour les variables sensibles (port, BDD, JWT, etc.)
+
+
 require('dotenv').config();
 
 
-// ✅ Imports des dépendances principales
+// ------------------------------
+// Imports
+// ------------------------------
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const csurf = require('csurf');
 const path = require('path');
+
+
 const app = express();
-
-
-// ✅ Connexion à la base de données PostgreSQL via Sequelize
 const sequelize = require('./config/db');
 
 
-// ✅ Affichage de la base à laquelle on est connecté
 console.log(`🌍 ENV : connecté à la base ${process.env.DB_NAME} en tant que ${process.env.DB_USER}`);
 
 
-// ✅ Middlewares globaux
-app.use(cors()); // autorise les requêtes cross-origin
-app.use(express.json()); // pour parser les JSON reçus
+// ------------------------------
+// Middlewares globaux
+// ------------------------------
+app.use(helmet());
+app.use(morgan('dev'));
 
 
-// ✅ Permet d’accéder aux images uploadées depuis le frontend
-app.use('/uploads', express.static(path.join(__dirname, '/src/uploads')));
+// 🚫 Anti-brute force
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: '⚠️ Trop de requêtes, réessayez plus tard.'
+});
+app.use(limiter);
 
 
-// ✅ Import des routes
-const authRoutes = require('./routes/auth.routes');
-const platRoutes = require('./routes/plat.routes');
-const utilisateurRoutes = require('./routes/utilisateur.routes');
-const contactRoutes = require('./routes/contact'); // ✅ Route Firebase ajoutée
+// 🔐 Cookies & body
+app.use(cookieParser());
+app.use(express.json());
 
 
-// ✅ Déclaration des routes API
-app.use('/api/auth', authRoutes);                // Authentification
-app.use('/api/plats', platRoutes);               // Plats (CRUD avec image)
-app.use('/api/utilisateurs', utilisateurRoutes); // Admin & rôles employés
-app.use('/api/contact', contactRoutes);          // ✅ Messages de contact via Firebase
+// ✅ CORS (frontend Netlify / localhost)
+app.use(cors({
+  origin: ['http://localhost:3001', 'https://gourmet-delight.netlify.app'],
+  credentials: true
+}));
 
 
-// ✅ Route test racine
-app.get('/', (req, res) => {
-  res.send('✅ Serveur lancé avec succès 🍽️');
+// 🛡️ Protection CSRF (après cookies & JSON)
+app.use(csurf({
+  cookie: {
+    httpOnly: false,        // Front peut lire le token
+    secure: false,          // 🔒 true en prod HTTPS
+    sameSite: 'Lax'
+  }
+}));
+
+
+// 🎫 Route pour récupérer le token CSRF
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
 });
 
 
-// ✅ Démarrage du serveur
+// ------------------------------
+// Fichiers statiques (ex : images plats)
+// ------------------------------
+app.use('/uploads', express.static(path.join(__dirname, '/src/uploads')));
+
+
+// ------------------------------
+// ROUTES API
+// ------------------------------
+app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/plats', require('./routes/plat.routes'));
+app.use('/api/utilisateurs', require('./routes/utilisateur.routes'));
+app.use('/api/contact', require('./routes/contact'));
+
+
+// ------------------------------
+// Test
+// ------------------------------
+app.get('/', (req, res) => {
+  res.send('✅ Serveur backend actif 🍽️');
+});
+
+
+// ------------------------------
+// Start serveur
+// ------------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
-  console.log(`🚀 Serveur backend en cours sur http://localhost:${PORT}`);
-
-
+  console.log(`🚀 Serveur backend lancé sur http://localhost:${PORT}`);
   try {
-    // Synchronisation des modèles Sequelize avec la base PostgreSQL
     await sequelize.sync();
     console.log('✅ Modèles Sequelize synchronisés avec la base PostgreSQL.');
   } catch (err) {
-    console.error('❌ Erreur de synchronisation Sequelize :', err);
+    console.error('❌ Erreur de sync Sequelize :', err);
   }
 });
 
