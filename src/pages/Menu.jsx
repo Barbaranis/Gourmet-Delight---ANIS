@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import api from '../axiosConfig';
 import '../Style/Menu.css';
 
-
 const CATEGORIES = {
   1: 'Entrées',
   2: 'Plats',
@@ -10,11 +9,9 @@ const CATEGORIES = {
   4: 'Boissons',
 };
 
-
 export default function Menu() {
   const [menuData, setMenuData] = useState({});
   const [activeTab, setActiveTab] = useState('Entrées');
-
 
   useEffect(() => {
     api.get('/api/plats')
@@ -24,15 +21,13 @@ export default function Menu() {
           const nomCat = CATEGORIES[plat.id_categorie] || 'Autres';
           if (!grouped[nomCat]) grouped[nomCat] = [];
 
-
           grouped[nomCat].push({
             id: plat.id_plat,
             name: plat.nom,
             description: plat.description,
             price: `${plat.prix}€`,
-            image_url: plat.image_url 
-              ? `http://localhost:3000/uploads/${plat.image_url}` 
-              // ? `/uploads/${plat.image_url}` // version si hébergé ailleurs
+            image_url: plat.image_url
+              ? `http://localhost:3000/uploads/${plat.image_url}`
               : null,
           });
         });
@@ -43,7 +38,6 @@ export default function Menu() {
       });
   }, []);
 
-
   return (
     <main className="menu-container">
       <section className="menu-intro">
@@ -53,7 +47,6 @@ export default function Menu() {
           Naviguez parmi nos catégories et laissez-vous tenter par l’exception gastronomique.
         </p>
       </section>
-
 
       <nav className="menu-tabs" role="tablist" aria-label="Catégories du menu">
         {Object.keys(menuData).map((category) => (
@@ -70,7 +63,6 @@ export default function Menu() {
         ))}
       </nav>
 
-
       <section
         className="menu-content"
         role="tabpanel"
@@ -83,7 +75,7 @@ export default function Menu() {
               {image_url && (
                 <img
                   src={image_url}
-                  alt={`Image du plat ${name}`}
+                  alt={name}
                   className="menu-item-image"
                 />
               )}

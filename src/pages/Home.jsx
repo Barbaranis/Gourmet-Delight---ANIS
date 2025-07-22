@@ -1,13 +1,16 @@
+// 📁 src/pages/Home.jsx
+
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseClient';
+import DOMPurify from 'dompurify'; // 🔐 Pour assainir les contenus HTML
 import '../Style/Home.css';
 import BoutonRetour from '../components/BoutonRetour';
 
 
-// ✅ IMPORT IMAGES
 import entreeImage from '../assets/entrees.jpg';
 import vinsImage from '../assets/VINS.jpg';
 import dessertsImage from '../assets/desserts.jpg';
@@ -28,20 +31,33 @@ const Home = () => {
   const testimonialsRef = useRef();
 
 
+  // 🔐 Sécurité : on nettoie les données Firestore (protection XSS)
+  const sanitize = (dirty) => DOMPurify.sanitize(dirty, { USE_PROFILES: { html: true } });
+
+
+  // 🔄 Chargement du contenu dynamique depuis Firestore
   useEffect(() => {
     const fetchContenu = async () => {
-      const docRef = doc(db, 'contenuSite', 'Principal');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setContenu(docSnap.data());
+      try {
+        const docRef = doc(db, 'contenuSite', 'Principal');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setContenu({
+            accueilIntroTitre: sanitize(data.accueilIntroTitre),
+            accueilIntroTexte: sanitize(data.accueilIntroTexte),
+            reservationTexte: sanitize(data.reservationTexte)
+          });
+        }
+      } catch (error) {
+        console.error("Erreur chargement contenu sécurisé :", error);
       }
     };
-
-
     fetchContenu();
   }, []);
 
 
+  // ✨ Animation lors du scroll : détection des sections visibles
   useEffect(() => {
     const handleScroll = () => {
       const newVisible = {};
@@ -66,7 +82,7 @@ const Home = () => {
 
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll();
+    handleScroll(); // Initialisation
 
 
     return () => window.removeEventListener('scroll', handleScroll);
@@ -78,7 +94,7 @@ const Home = () => {
       <BoutonRetour />
 
 
-      {/* HERO SECTION */}
+      {/* 🎯 SECTION HERO - introduction visuelle */}
       <section className="hero-banner" role="banner" aria-label="Présentation du restaurant">
         <div className="hero-overlay" />
         <div className="hero-content">
@@ -88,22 +104,22 @@ const Home = () => {
       </section>
 
 
-      {/* INTRODUCTION */}
+      {/* 📌 SECTION INTRO */}
       <section
-        className={`intro section ${visibleSections.intro > 0.3 ? 'visible' : ''}`}
+        className={`intro fade-in ${visibleSections.intro > 0.3 ? 'visible' : ''}`}
         ref={introRef}
         aria-labelledby="intro-heading"
       >
         <div className="intro-text">
-          <h2 id="intro-heading">{contenu.accueilIntroTitre}</h2>
-          <p>{contenu.accueilIntroTexte}</p>
+          <h2 id="intro-heading" dangerouslySetInnerHTML={{ __html: contenu.accueilIntroTitre }} />
+          <p dangerouslySetInnerHTML={{ __html: contenu.accueilIntroTexte }} />
         </div>
       </section>
 
 
-      {/* SPÉCIALITÉS */}
+      {/* 🍽️ SECTION SPÉCIALITÉS */}
       <section
-        className={`specialties section ${visibleSections.specialties > 0.3 ? 'visible' : ''}`}
+        className={`specialties fade-in ${visibleSections.specialties > 0.3 ? 'visible' : ''}`}
         ref={specialtiesRef}
         aria-labelledby="specialties-heading"
       >
@@ -139,23 +155,23 @@ const Home = () => {
       </section>
 
 
-      {/* RÉSERVATION */}
+      {/* 🗓️ SECTION RÉSERVATION */}
       <section
-        className={`reservation section ${visibleSections.reservation > 0.3 ? 'visible' : ''}`}
+        className={`reservation fade-in ${visibleSections.reservation > 0.3 ? 'visible' : ''}`}
         ref={reservationRef}
         aria-labelledby="reservation-heading"
       >
         <h2 id="reservation-heading">Réservation en ligne</h2>
-        <p>{contenu.reservationTexte}</p>
+        <p dangerouslySetInnerHTML={{ __html: contenu.reservationTexte }} />
         <Link to="/reservation" className="reservation-button" role="button">
           Réserver maintenant
         </Link>
       </section>
 
 
-      {/* TÉMOIGNAGES */}
+      {/* 💬 SECTION TÉMOIGNAGES */}
       <section
-        className={`testimonials section ${visibleSections.testimonials > 0.3 ? 'visible' : ''}`}
+        className={`testimonials fade-in ${visibleSections.testimonials > 0.3 ? 'visible' : ''}`}
         ref={testimonialsRef}
         aria-labelledby="testimonials-heading"
       >

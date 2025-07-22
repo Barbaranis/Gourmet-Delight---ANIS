@@ -5,10 +5,6 @@ import '../Style/ModifierContenuSite.css';
 import BoutonRetour from '../components/BoutonRetour';
 
 
-// ... dans ton JSX :
-<BoutonRetour />
-
-
 const ModifierContenuSite = () => {
   const [contenu, setContenu] = useState({
     accueilIntroTitre: '',
@@ -16,8 +12,12 @@ const ModifierContenuSite = () => {
     reservationTexte: '',
     aProposHistoire: '',
     aProposMission: '',
-    aProposHommage: ''
+    aProposHommage: '',
+    horairesSemaine: '',
+    horairesWeekend: ''
   });
+
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
@@ -43,7 +43,7 @@ const ModifierContenuSite = () => {
 
   const handleSave = async () => {
     try {
-      await setDoc(doc(db, 'contenuSite', 'Principal'), contenu); // respecte la majuscule !
+      await setDoc(doc(db, 'contenuSite', 'Principal'), contenu);
       setMessage('✅ Contenu mis à jour avec succès.');
       setTimeout(() => setMessage(''), 3000);
     } catch (err) {
@@ -58,6 +58,7 @@ const ModifierContenuSite = () => {
 
   return (
     <div className="modifier-contenu">
+      <BoutonRetour />
       <h2>📝 Modifier le contenu du site</h2>
       {message && <div className="message-feedback">{message}</div>}
 
@@ -102,11 +103,27 @@ const ModifierContenuSite = () => {
       </div>
 
 
-      <label>Hommage à Anis  :</label>
+      <label>Hommage à Anis :</label>
       <textarea name="aProposHommage" value={contenu.aProposHommage} onChange={handleChange} rows={3} />
       <div className="preview-block">
         <strong>Aperçu :</strong>
         <p>{contenu.aProposHommage}</p>
+      </div>
+
+
+      <label>Horaires (semaine) :</label>
+      <input name="horairesSemaine" value={contenu.horairesSemaine} onChange={handleChange} />
+      <div className="preview-block">
+        <strong>Aperçu :</strong>
+        <p>{contenu.horairesSemaine}</p>
+      </div>
+
+
+      <label>Horaires (week-end) :</label>
+      <input name="horairesWeekend" value={contenu.horairesWeekend} onChange={handleChange} />
+      <div className="preview-block">
+        <strong>Aperçu :</strong>
+        <p>{contenu.horairesWeekend}</p>
       </div>
 
 

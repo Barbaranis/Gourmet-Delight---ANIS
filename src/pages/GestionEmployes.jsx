@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import '../Style/GestionEmployes.css';
-
 
 const GestionEmployes = () => {
   const [form, setForm] = useState({
@@ -13,17 +12,14 @@ const GestionEmployes = () => {
     telephone: ''
   });
 
-
   const [feedback, setFeedback] = useState('');
   const [employes, setEmployes] = useState([]);
   const [loading, setLoading] = useState(false);
 
-
   const token = localStorage.getItem('token');
 
-
-  // 🔄 Récupérer la liste des employés au chargement
-  const fetchEmployes = async () => {
+  // ✅ Corrigé avec useCallback pour éviter l’erreur ESLint sur useEffect
+  const fetchEmployes = useCallback(async () => {
     try {
       const res = await axios.get('http://localhost:3000/api/utilisateurs', {
         headers: { Authorization: `Bearer ${token}` }
@@ -32,33 +28,26 @@ const GestionEmployes = () => {
     } catch (err) {
       console.error('❌ Erreur récupération employés :', err);
     }
-  };
-
+  }, [token]);
 
   useEffect(() => {
     fetchEmployes();
-  }, []);
+  }, [fetchEmployes]);
 
-
-  // 🔧 Gestion des inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-
-  // ➕ Ajouter un employé
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFeedback('');
     setLoading(true);
 
-
     try {
       await axios.post('http://localhost:3000/api/utilisateurs', form, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
 
       setFeedback('✅ Employé ajouté avec succès.');
       setForm({ nom: '', prenom: '', email: '', mot_de_passe: '', role: '', telephone: '' });
@@ -70,11 +59,8 @@ const GestionEmployes = () => {
     }
   };
 
-
-  // 🗑 Supprimer un employé
   const handleDelete = async (id) => {
     if (!window.confirm('❗ Supprimer cet employé ?')) return;
-
 
     try {
       await axios.delete(`http://localhost:3000/api/utilisateurs/${id}`, {
@@ -87,11 +73,9 @@ const GestionEmployes = () => {
     }
   };
 
-
   return (
     <div className="gestion-employes">
       <h2>👤 Ajouter un employé</h2>
-
 
       <form className="form-ajout" onSubmit={handleSubmit}>
         <input type="text" name="nom" placeholder="Nom" value={form.nom} onChange={handleChange} required />
@@ -109,15 +93,12 @@ const GestionEmployes = () => {
         </select>
         <input type="tel" name="telephone" placeholder="Téléphone (facultatif)" value={form.telephone} onChange={handleChange} />
 
-
         <button type="submit" disabled={loading}>
           {loading ? 'Ajout en cours...' : 'Ajouter'}
         </button>
       </form>
 
-
       {feedback && <p className="feedback">{feedback}</p>}
-
 
       <h2>📋 Liste des employés</h2>
       {employes.length === 0 ? (
@@ -135,7 +116,6 @@ const GestionEmployes = () => {
     </div>
   );
 };
-
 
 export default GestionEmployes;
 

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+//src/pages/Reservation1.jsx
+
+ import React, { useState } from 'react';
 import '../Style/Reservation.css';
 import { db } from '../firebaseClient';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import BoutonRetour from '../components/BoutonRetour';
+import DOMPurify from 'dompurify'; // 🛡️ Protection XSS
+import CookieBanner from '../components/CookieBanner';
 
-
-// ... dans ton JSX :
-<BoutonRetour />
 
 
 const Reservation = () => {
@@ -16,7 +16,8 @@ const Reservation = () => {
     date: '',
     time: '',
     guests: '',
-    message: ''
+    message: '',
+    chef: ''
   });
 
 
@@ -24,11 +25,13 @@ const Reservation = () => {
   const [submitted, setSubmitted] = useState(false);
 
 
+  // 🔄 Met à jour le formulaire
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
 
+  // ✅ Validation des champs
   const validate = () => {
     const newErrors = {};
 
@@ -56,6 +59,7 @@ const Reservation = () => {
   };
 
 
+  // 🧼 Protection XSS + soumission vers Firestore
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
@@ -63,10 +67,20 @@ const Reservation = () => {
 
     if (Object.keys(validationErrors).length === 0) {
       try {
-        await addDoc(collection(db, 'reservations'), {
-          ...formData,
+        // 🔐 Nettoyage XSS avec DOMPurify
+        const sanitizedData = {
+          name: DOMPurify.sanitize(formData.name.trim()),
+          email: DOMPurify.sanitize(formData.email.trim()),
+          date: formData.date,
+          time: formData.time,
+          guests: DOMPurify.sanitize(formData.guests.toString()),
+          message: DOMPurify.sanitize(formData.message.trim()),
+          chef: DOMPurify.sanitize(formData.chef),
           createdAt: serverTimestamp()
-        });
+        };
+
+
+        await addDoc(collection(db, 'reservations'), sanitizedData);
 
 
         setSubmitted(true);
@@ -76,7 +90,8 @@ const Reservation = () => {
           date: '',
           time: '',
           guests: '',
-          message: ''
+          message: '',
+          chef: ''
         });
         setErrors({});
       } catch (error) {
@@ -91,6 +106,7 @@ const Reservation = () => {
 
   return (
     <main className="reservation-page" role="main" aria-labelledby="reservation-title">
+      
       <h1 id="reservation-title">Réservez votre table</h1>
 
 
@@ -100,40 +116,101 @@ const Reservation = () => {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="reservation-form" noValidate>
+          {/* Nom */}
           <label htmlFor="name">Nom</label>
-          <input type="text" id="name" name="name" value={formData.name} onChange={handleChange}
-            aria-invalid={!!errors.name} aria-describedby="name-error" placeholder="Jean Dupont" />
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            aria-invalid={!!errors.name}
+            aria-describedby="name-error"
+            placeholder="Jean Dupont"
+          />
           {errors.name && <span id="name-error" role="alert" className="error">{errors.name}</span>}
 
 
+          {/* Email */}
           <label htmlFor="email">Email</label>
-          <input type="email" id="email" name="email" value={formData.email} onChange={handleChange}
-            aria-invalid={!!errors.email} aria-describedby="email-error" placeholder="exemple@mail.com" />
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            aria-invalid={!!errors.email}
+            aria-describedby="email-error"
+            placeholder="exemple@mail.com"
+          />
           {errors.email && <span id="email-error" role="alert" className="error">{errors.email}</span>}
 
 
+          {/* Date */}
           <label htmlFor="date">Date</label>
-          <input type="date" id="date" name="date" value={formData.date} onChange={handleChange}
-            aria-invalid={!!errors.date} aria-describedby="date-error" />
+          <input
+            type="date"
+            id="date"
+            name="date"
+            value={formData.date}
+            onChange={handleChange}
+            aria-invalid={!!errors.date}
+            aria-describedby="date-error"
+          />
           {errors.date && <span id="date-error" role="alert" className="error">{errors.date}</span>}
 
 
+          {/* Heure */}
           <label htmlFor="time">Heure</label>
-          <input type="time" id="time" name="time" value={formData.time} onChange={handleChange}
-            aria-invalid={!!errors.time} aria-describedby="time-error" />
+          <input
+            type="time"
+            id="time"
+            name="time"
+            value={formData.time}
+            onChange={handleChange}
+            aria-invalid={!!errors.time}
+            aria-describedby="time-error"
+          />
           {errors.time && <span id="time-error" role="alert" className="error">{errors.time}</span>}
 
 
+          {/* Nombre de personnes */}
           <label htmlFor="guests">Nombre de personnes</label>
-          <input type="number" id="guests" name="guests" min="1" max="99" value={formData.guests}
-            onChange={handleChange} aria-invalid={!!errors.guests} aria-describedby="guests-error" placeholder="2" />
+          <input
+            type="number"
+            id="guests"
+            name="guests"
+            min="1"
+            max="99"
+            value={formData.guests}
+            onChange={handleChange}
+            aria-invalid={!!errors.guests}
+            aria-describedby="guests-error"
+            placeholder="2"
+          />
           {errors.guests && <span id="guests-error" role="alert" className="error">{errors.guests}</span>}
 
 
-          <label htmlFor="message">Message (optionnel)</label>
-          <textarea id="message" name="message" value={formData.message} onChange={handleChange}
-            placeholder="Allergies, préférences, etc." />
+          {/* Chef préféré */}
+          <label htmlFor="chef">Chef préféré (optionnel)</label>
+          <select id="chef" name="chef" value={formData.chef} onChange={handleChange}>
+            <option value="">-- Choisir un chef (facultatif) --</option>
+            <option value="Lucien d’Albray">Lucien d’Albray</option>
+            <option value="Sakura Yamashita">Sakura Yamashita</option>
+            <option value="Giacomo Bellandi">Giacomo Bellandi</option>
+          </select>
 
+
+          {/* Message */}
+          <label htmlFor="message">Message (optionnel)</label>
+          <textarea
+            id="message"
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            placeholder="Allergies, préférences, etc."
+          />
+<CookieBanner />
 
           <button type="submit">Envoyer</button>
         </form>

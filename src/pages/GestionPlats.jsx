@@ -1,6 +1,3 @@
-//src/pages/GestionPlats.jsx
-
-
 import React, { useState, useEffect } from 'react';
 import api from '../axiosConfig';
 import '../Style/GestionPlats.css';
@@ -140,7 +137,7 @@ const GestionPlats = () => {
             <p>Image actuelle :</p>
             <img
               src={`/uploads/${plats.find(p => p.id_plat === editId)?.image_url}`}
-              alt="Image actuelle du plat"
+              alt={`Aperçu actuel de ${newPlat.nom || 'ce plat'}`}
               className="miniature-image"
             />
           </div>
@@ -153,7 +150,7 @@ const GestionPlats = () => {
             <p>Nouvelle image sélectionnée :</p>
             <img
               src={URL.createObjectURL(imageFile)}
-              alt="Aperçu de la nouvelle image"
+              alt={`Aperçu de ${newPlat.nom || 'la nouvelle image'}`}
               className="miniature-image"
             />
           </div>
@@ -176,8 +173,12 @@ const GestionPlats = () => {
         {plats.map((plat) => (
           <li key={plat.id_plat} className="plat-item">
             <img
-              src={`/uploads/${plat.image_url}`}
-              alt={`Image du plat ${plat.nom}`}
+             src={`http://localhost:3000/uploads/${plat.image_url}`}
+
+
+
+
+              alt={plat.nom}
               className="plat-image"
             />
             <div>
@@ -195,3 +196,4 @@ const GestionPlats = () => {
 };
 
 export default GestionPlats;
+

@@ -7,24 +7,40 @@ import sakura from '../assets/chefs/sakura.jpg';
 import giacomo from '../assets/chefs/giacomo.jpg';
 
 
+import { db } from '../firebaseClient';
+import { doc, setDoc, increment } from 'firebase/firestore';
+
+
 const chefs = [
   {
     nom: 'Lucien d’Albray',
     specialite: 'Cuisine française moléculaire',
     image: lucien,
-    histoire: `Lucien est le génie visionnaire derrière l’expérience gastronomique du Gourmet Delight. Ancien élève de l’institut Paul Bocuse, il a décroché sa première étoile à 26 ans pour sa revisite du foie gras infusé à l’hibiscus. Il est le chef exécutif du restaurant, supervise chaque assiette et signe les créations du menu dégustation.`
+    histoire: `Lucien est le génie visionnaire derrière l’expérience gastronomique du Gourmet Delight. Ancien élève de l’institut Paul Bocuse, il a décroché sa première étoile à 26 ans pour sa revisite du foie gras infusé à l’hibiscus. Il est le chef exécutif du restaurant, supervise chaque assiette et signe les créations du menu dégustation.`,
+    creations: [
+      { nom: "Foie gras à l’hibiscus", description: "Émulsion délicate et florale, en entrée signature." },
+      { nom: "Saint-Jacques en sphérification", description: "Explosion marine en bouche." }
+    ]
   },
   {
     nom: 'Sakura Yamashita',
     specialite: 'Fusion japonaise-méditerranéenne',
     image: sakura,
-    histoire: `Née à Osaka, Sakura est la poétesse des saveurs inattendues. Connue pour sa signature « sashimi de daurade au citron confit », elle a reçu deux étoiles pour son travail sur les textures marines. Elle est responsable des entrées et plats froids, apportant une touche florale et artistique.`
+    histoire: `Née à Osaka, Sakura est la poétesse des saveurs inattendues. Connue pour sa signature « sashimi de daurade au citron confit », elle a reçu deux étoiles pour son travail sur les textures marines. Elle est responsable des entrées et plats froids, apportant une touche florale et artistique.`,
+    creations: [
+      { nom: "Sashimi de daurade au citron confit", description: "Assiette florale, subtile et rafraîchissante." },
+      { nom: "Ceviche de thon à la lavande", description: "Mariage audacieux entre Méditerranée et Japon." }
+    ]
   },
   {
     nom: 'Giacomo Bellandi',
     specialite: 'Desserts à l’italienne',
     image: giacomo,
-    histoire: `Maestro du sucré, Giacomo est un magicien toscan de la pâtisserie. Connu pour son « tiramisu suspendu », il a été élu meilleur chef pâtissier d’Europe en 2022. Il conclut chaque repas avec une œuvre d’art sucrée, qui fait revenir les clients pour le dessert.`
+    histoire: `Maestro du sucré, Giacomo est un magicien toscan de la pâtisserie. Connu pour son « tiramisu suspendu », il a été élu meilleur chef pâtissier d’Europe en 2022. Il conclut chaque repas avec une œuvre d’art sucrée, qui fait revenir les clients pour le dessert.`,
+    creations: [
+      { nom: "Tiramisu suspendu", description: "Dessert aérien servi dans une verrine flottante." },
+      { nom: "Gelato à la truffe blanche", description: "Alliance surprenante entre glace et gastronomie fine." }
+    ]
   }
 ];
 
@@ -49,6 +65,30 @@ const Chefs = () => {
   };
 
 
+  const normalizeId = (nom) => {
+    return nom
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/gi, '')
+      .replace(/\s+/g, '_')
+      .toLowerCase();
+  };
+
+
+  const enregistrerConsultation = async (chef) => {
+    try {
+      const idChef = normalizeId(chef.nom);
+      const docRef = doc(db, 'chefsStats', idChef);
+      await setDoc(docRef, {
+        nom: chef.nom,
+        consultations: increment(1)
+      }, { merge: true });
+    } catch (error) {
+      console.error("Erreur en enregistrant la consultation :", error);
+    }
+  };
+
+
   return (
     <main className="chefs-page" role="main" aria-labelledby="chefs-title">
       <h1 id="chefs-title">Nos Chefs Étoilés</h1>
@@ -57,7 +97,12 @@ const Chefs = () => {
           <div
             className="chef-card"
             key={index}
-            onMouseEnter={() => !isMobile && setActiveChef(index)}
+            onMouseEnter={() => {
+              if (!isMobile) {
+                setActiveChef(index);
+                enregistrerConsultation(chef);
+              }
+            }}
             onMouseLeave={() => !isMobile && setActiveChef(null)}
           >
             <img src={chef.image} alt={`Portrait de ${chef.nom}`} className="chef-img" />
@@ -66,11 +111,24 @@ const Chefs = () => {
 
 
             {isMobile ? (
-              <button className="voir-plus" onClick={() => setActiveChef(index)}>Voir plus</button>
+              <button
+                className="voir-plus"
+                onClick={() => {
+                  setActiveChef(index);
+                  enregistrerConsultation(chef);
+                }}
+              >
+                Voir plus
+              </button>
             ) : (
               activeChef === index && (
                 <div className="chef-hover-detail" role="dialog" aria-label={`Détails sur ${chef.nom}`}>
                   <p>{chef.histoire}</p>
+                  <ul className="chef-creations">
+                    {chef.creations.map((c, i) => (
+                      <li key={i}><strong>{c.nom}</strong> — {c.description}</li>
+                    ))}
+                  </ul>
                 </div>
               )
             )}
@@ -86,6 +144,11 @@ const Chefs = () => {
             <h2>{chefs[activeChef].nom}</h2>
             <p><strong>Spécialité :</strong> {chefs[activeChef].specialite}</p>
             <p>{chefs[activeChef].histoire}</p>
+            <ul className="chef-creations">
+              {chefs[activeChef].creations.map((c, i) => (
+                <li key={i}><strong>{c.nom}</strong> — {c.description}</li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
@@ -95,4 +158,8 @@ const Chefs = () => {
 
 
 export default Chefs;
+
+
+
+
 

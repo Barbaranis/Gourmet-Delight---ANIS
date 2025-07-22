@@ -52,6 +52,7 @@ const NavMenu = () => {
 
         <Link to="/" onClick={() => setMenuOpen(false)}>Accueil</Link>
         <Link to="/menu" onClick={() => setMenuOpen(false)}>Menu</Link>
+        <Link to="/reservation" onClick={() => setMenuOpen(false)}>Reservation</Link>
         <Link to="/chefs" onClick={() => setMenuOpen(false)}>Chefs</Link>
         <Link to="/about" onClick={() => setMenuOpen(false)}>À propos</Link>
         <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
@@ -64,6 +65,7 @@ const NavMenu = () => {
       <nav className="nav-desktop" aria-label="Navigation principale">
         <Link to="/">Accueil</Link>
         <Link to="/menu">Menu</Link>
+        <Link to="/reservation">Rservation</Link>
         <Link to="/chefs">Chefs</Link>
         <Link to="/about">À propos</Link>
         <Link to="/contact">Contact</Link>

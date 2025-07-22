@@ -8,63 +8,83 @@
   --color-text: #4a2c3f;
   --color-error: #c94f8f;
   --color-accent: #b04572;
+  --radius: 16px;
 }
 
 
-/* Reset & Base */
-* {
+/* ------------------------ */
+/* 🔁 RESET + BASE TYPOGRAPHY */
+/* ------------------------ */
+
+
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 
-body, html, #root {
-  height: 100%;
-  font-family: 'Poppins', sans-serif;
-  background: var(--color-bg);
-  color: var(--color-text);
+html {
   scroll-behavior: smooth;
+  font-size: 16px;
 }
 
 
-/* ----------- Conteneur principal ----------- */
+body, html, #root {
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+
+/* ------------------------ */
+/* 🎯 CONTAINER PRINCIPAL */
+/* ------------------------ */
+
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  padding: 20px;
-  background: radial-gradient(circle at top left, #ffffff, #ffffff);
+  padding: 1rem;
+  background: radial-gradient(circle at top left, #ffffff, #fdf6f6);
 }
 
 
-/* ----------- Formulaire ----------- */
+/* ------------------------ */
+/* 🧾 FORMULAIRE LOGIN */
+/* ------------------------ */
+
+
 .login-form {
-  background: #ffffff;
-  padding: 45px 55px;
+  background: #fff;
+  padding: 2.8rem 3.4rem;
   border-radius: 28px;
   box-shadow: 0 15px 40px rgba(109, 59, 81, 0.15);
   width: 100%;
   max-width: 420px;
   text-align: center;
-  user-select: none;
-  position: relative;
   animation: fadeIn 0.4s ease-out;
 }
 
 
-/* Titre */
 .login-form h1 {
   font-family: 'Great Vibes', cursive;
-  font-size: 3.6rem;
+  font-size: clamp(2.4rem, 4vw, 3.6rem);
   color: var(--color-primary);
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
   text-shadow: 0 3px 10px rgba(109, 59, 81, 0.2);
 }
 
 
-/* Labels */
+/* ------------------------ */
+/* 🏷️ CHAMPS & ÉTIQUETTES */
+/* ------------------------ */
+
+
 .login-form label {
   display: block;
   text-align: left;
@@ -75,42 +95,54 @@ body, html, #root {
 }
 
 
-/* Inputs */
 .login-form input {
   width: 100%;
-  padding: 13px 16px;
-  margin-bottom: 18px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.1rem;
   border: 2px solid var(--color-secondary);
-  border-radius: 15px;
-  font-size: 1.05rem;
+  border-radius: var(--radius);
+  font-size: 1rem;
   transition: all 0.3s ease;
   font-family: 'Poppins', sans-serif;
   color: var(--color-text);
-  background: #fff;
+  background-color: #fff;
 }
 
 
-.login-form input:focus {
+.login-form input:focus-visible {
   border-color: var(--color-primary);
-  box-shadow: 0 0 10px rgba(109, 59, 81, 0.3);
+  box-shadow: 0 0 10px rgba(109, 59, 81, 0.25);
   outline: none;
 }
 
 
-/* Erreurs */
+/* ------------------------ */
+/* ⚠️ MESSAGES D'ERREUR */
+/* ------------------------ */
+
+
 .error {
   color: var(--color-error);
   font-size: 0.88rem;
   font-weight: 600;
-  margin: -10px 0 12px 0;
+  margin: -0.5rem 0 1rem 0;
   text-align: left;
 }
 
 
-/* Bouton */
+[aria-live] {
+  min-height: 1.2rem;
+}
+
+
+/* ------------------------ */
+/* ✅ BOUTON */
+/* ------------------------ */
+
+
 .login-form button {
   font-family: 'Great Vibes', cursive;
-  font-size: 2rem;
+  font-size: clamp(1.8rem, 3vw, 2rem);
   background-color: var(--color-primary);
   color: #fff9fb;
   border: none;
@@ -124,7 +156,7 @@ body, html, #root {
 
 
 .login-form button:hover,
-.login-form button:focus {
+.login-form button:focus-visible {
   background-color: var(--color-secondary);
   color: var(--color-primary);
   box-shadow: 0 0 24px rgba(232, 226, 229, 0.9);
@@ -133,41 +165,61 @@ body, html, #root {
 }
 
 
-/* Animation apparition */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+/* ------------------------ */
+/* 🌀 RECAPTCHA BOX */
+/* ------------------------ */
+
+
+.g-recaptcha {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
 }
 
 
-/* ----------- Responsive ----------- */
+/* ------------------------ */
+/* 🎞️ ANIMATION APPARITION */
+/* ------------------------ */
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+
+/* ------------------------ */
+/* 📱 RESPONSIVE DESIGN */
+/* ------------------------ */
+
+
 @media (max-width: 600px) {
   .login-form {
-    padding: 30px 25px;
-  }
-
-
-  .login-form h1 {
-    font-size: 3rem;
+    padding: 2rem 1.5rem;
   }
 
 
   .login-form input {
-    padding: 12px;
-    font-size: 1rem;
+    padding: 0.8rem;
+    font-size: 0.95rem;
   }
 
 
   .login-form button {
-    font-size: 1.6rem;
     padding: 12px 0;
   }
 }
 
 
-@media (max-width: 400px) {
+@media (max-width: 360px) {
   .login-form h1 {
-    font-size: 2.6rem;
+    font-size: 2.3rem;
   }
 }
+
+
+
+
+
+
 

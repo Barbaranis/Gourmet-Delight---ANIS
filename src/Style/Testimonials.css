@@ -134,6 +134,11 @@
   }
 
 
+  .testimonial-form-section h2 {
+    font-size: 2.4rem;
+  }
+
+
   .testimonial-form button {
     padding: 14px 40px;
     font-size: 1.6rem;
@@ -173,4 +178,6 @@
     padding: 10px 12px;
   }
 }
+
+
 

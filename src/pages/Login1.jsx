@@ -1,14 +1,6 @@
-//src/pages/Login1.jsx
-
-
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../Style/Login.css';
-import BoutonRetour from '../components/BoutonRetour';
-
-
-// ... dans ton JSX :
-<BoutonRetour />
 
 
 const Login = () => {
@@ -16,6 +8,17 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const navigate = useNavigate();
+  const recaptchaRef = useRef(null);
+
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://www.google.com/recaptcha/api.js';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+  }, []);
+
 
   const validate = () => {
     const errs = {};
@@ -25,12 +28,13 @@ const Login = () => {
       errs.email = 'Format d\'email invalide.';
     }
     if (!form.password || form.password.trim() === '') {
-      errs.password = 'Mot de passe est requis.';
+      errs.password = 'Mot de passe requis.';
     } else if (form.password.length < 6) {
-      errs.password = 'Le mot de passe doit contenir au moins 6 caractères.';
+      errs.password = 'Minimum 6 caractères.';
     }
     return errs;
   };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +42,7 @@ const Login = () => {
     setErrors(prev => ({ ...prev, [name]: '' }));
     setApiError('');
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,46 +52,68 @@ const Login = () => {
       return;
     }
 
-    // 🔍 Vérification console pour debug
-    console.log("Tentative login avec :", form);
+
+    const recaptchaToken = window.grecaptcha?.getResponse();
+    if (!recaptchaToken) {
+      setApiError("Veuillez cocher le reCAPTCHA.");
+      return;
+    }
+
 
     try {
+      // ✅ Récupération du CSRF token
+      const csrfRes = await fetch('http://localhost:3000/api/csrf-token', {
+        credentials: 'include',
+      });
+      const csrfData = await csrfRes.json();
+
+
+      // 🔐 Envoi des identifiants avec CSRF et reCAPTCHA
       const res = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfData.csrfToken
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: form.email,
+          mot_de_passe: form.password,
+          recaptchaToken
+        })
+        
       });
 
+
       const data = await res.json();
+
 
       if (!res.ok) {
         setApiError(data.message || 'Erreur serveur.');
         return;
       }
 
-      // ✅ Stockage des données
-      localStorage.setItem('token', data.token);
+
       localStorage.setItem('role', data.user.role);
       localStorage.setItem('prenom', data.user.prenom);
+      navigate(data.user.role === 'admin' ? '/admin/dashboard' : '/employe/dashboard');
 
-      // ✅ Redirection selon le rôle
-      if (data.user.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/employe/dashboard');
-      }
+
     } catch (error) {
       console.error('Erreur de connexion :', error);
       setApiError('Erreur réseau.');
     }
   };
 
+
   return (
     <main className="login-container" aria-label="Page de connexion">
       <form className="login-form" onSubmit={handleSubmit} noValidate>
         <h1>Connexion</h1>
 
+
         {apiError && <p className="error">{apiError}</p>}
+
 
         <label htmlFor="email">Email</label>
         <input
@@ -103,6 +130,7 @@ const Login = () => {
         />
         {errors.email && <span id="email-error" className="error">{errors.email}</span>}
 
+
         <label htmlFor="password">Mot de passe</label>
         <input
           type="password"
@@ -118,10 +146,20 @@ const Login = () => {
         />
         {errors.password && <span id="password-error" className="error">{errors.password}</span>}
 
+
+        <div
+          className="g-recaptcha"
+          data-sitekey="6Lf4dosrAAAAAFTGUzeyKtbrKE9OW7WTobBfyK42"
+          ref={recaptchaRef}
+        ></div>
+
+
         <button type="submit">Se connecter</button>
       </form>
     </main>
   );
 };
 
+
 export default Login;
+

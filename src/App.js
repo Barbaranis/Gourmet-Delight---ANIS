@@ -1,3 +1,8 @@
+// ===========================
+// App.js - Routing principal
+// ===========================
+
+
 import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
@@ -11,6 +16,12 @@ import Testimonials from './pages/Testimonials';
 import Login from './pages/Login1.jsx';
 import Reservation from './pages/Reservation1.jsx';
 import Chefs from './pages/Chefs';
+import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite.jsx';
+import MentionsLegales from './pages/MentionsLegales.jsx';
+import CGUCGV from './pages/CGUCGV';
+import RegistreRGPD from './pages/RegistreRGPD.jsx';
+
+
 
 
 // 🔐 Dashboards (admin + employés)
@@ -22,6 +33,9 @@ import GestionAvis from './pages/GestionAvis';
 import GestionReservations from './pages/GestionReservations';
 import GestionMessages from './pages/GestionMessages';
 import ModifierContenuSite from './pages/ModifierContenuSite';
+import StatistiquesChefs from './pages/StatistiquesChefs.jsx';
+import StatistiquesParChef from './pages/StatistiquesParChef.jsx';
+import StatistiquesReservations from './pages/StatistiquesReservations';
 
 
 // 📦 Composants globaux
@@ -29,19 +43,29 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import BoutonRetour from './components/BoutonRetour.jsx';
+import CookieBanner from './components/CookieBanner.jsx';
 
 
-// 🔐 Auth context
+// 🔐 Auth context & route protégée
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+
+
+// ❗ Page 404
+const NotFound = () => (
+  <div role="alert" style={{ padding: '2rem' }}>
+    <h1>404 - Page non trouvée</h1>
+  </div>
+);
 
 
 function App() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ Pour déterminer la page courante
+  const location = useLocation();
 
 
+  // 🔒 Redirection automatique selon rôle utilisateur
   useEffect(() => {
     if (token && user?.role) {
       switch (user.role) {
@@ -61,19 +85,18 @@ function App() {
   }, [token, user, navigate]);
 
 
-  // ✅ Pages où on ne veut PAS afficher le bouton retour
-  const pagesSansBoutonRetour = ['/', '/login'];
-
-
   return (
     <>
       <Header />
-      <main style={{ minHeight: '80vh' }}>
+      <ScrollToTop />
 
-		 {/* ✅ Bouton retour global sauf sur certaines pages */}
- {!pagesSansBoutonRetour.includes(location.pathname) && (
+
+      <main style={{ minHeight: '80vh' }} role="main">
+        {!(location.pathname === '/' || location.pathname === '/Home') && (
           <BoutonRetour />
         )}
+
+
         <Routes>
           {/* 🌐 Pages publiques */}
           <Route path="/" element={<Home />} />
@@ -85,10 +108,12 @@ function App() {
           <Route path="/avis" element={<Testimonials />} />
           <Route path="/login" element={<Login />} />
           <Route path="/reservation" element={<Reservation />} />
+          <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
+          <Route path="/mentions-legales" element={<MentionsLegales />} />
+          <Route path="/cgu-cgv" element={<CGUCGV />} />
+          <Route path="/Registre-rgpd" element={<RegistreRGPD/>} />
 
-
-
-          {/* 🔐 Dashboard Employé */}
+          {/* 🔐 Employés */}
           <Route path="/employe/dashboard" element={
             <ProtectedRoute>
               <DashboardEmploye />
@@ -96,7 +121,7 @@ function App() {
           } />
 
 
-          {/* 🔐 Dashboard ADMIN */}
+          {/* 🔐 Admin */}
           <Route path="/admin/dashboard" element={
             <ProtectedRoute>
               <DashboardAdmin />
@@ -132,15 +157,30 @@ function App() {
               <ModifierContenuSite />
             </ProtectedRoute>
           } />
+          <Route path="/admin/statistiques" element={
+            <ProtectedRoute>
+              <StatistiquesChefs />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/statistiques-par-chef" element={
+            <ProtectedRoute>
+              <StatistiquesParChef />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/statistiques-reservations" element={
+            <ProtectedRoute>
+              <StatistiquesReservations />
+            </ProtectedRoute>
+          } />
+
+
+          {/* 🧯 Fallback */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
-
-
-        {/* ✅ Composants globaux toujours visibles */}
-        <ScrollToTop />
-
-
-       
       </main>
+
+
+      <CookieBanner />
       <Footer />
     </>
   );

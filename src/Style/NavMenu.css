@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Poppins:wght@300;400;600&display=swap');
 
-
 /* ----------------------- BASE ----------------------- */
 body {
   font-family: 'Great Vibes', cursive;
@@ -9,7 +8,6 @@ body {
   background: #fffafc;
   color: #44093be0;
 }
-
 
 a {
   text-decoration: none;
@@ -29,15 +27,13 @@ a {
   z-index: 100;
 }
 
-
 .nav-desktop a {
-  color:#44093be0;
+  color: #44093be0;
   font-size: 0.95rem;
   position: relative;
   padding: 5px 0;
   transition: color 0.35s ease;
 }
-
 
 .nav-desktop a::after {
   content: "";
@@ -51,13 +47,11 @@ a {
   transition: width 0.35s ease;
 }
 
-
 .nav-desktop a:hover,
 .nav-desktop a:focus {
   color: #7a2f58;
   outline: none;
 }
-
 
 .nav-desktop a:hover::after,
 .nav-desktop a:focus::after {
@@ -65,16 +59,15 @@ a {
 }
 
 
-/* -------------------- BOUTON BURGER -------------------- */
+/* -------------------- BOUTON BURGER (MOBILE SEULEMENT) -------------------- */
 .menu-toggle {
-  display: none;
+  display: none; /* caché par défaut (desktop) */
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
   width: 40px;
   height: 30px;
   background-color: #c78199c8;
- margin-top: 8%;
   border-radius: 6px;
   cursor: pointer;
   position: fixed;
@@ -85,13 +78,11 @@ a {
   transition: background 0.3s ease;
 }
 
-
 .menu-toggle:hover,
 .menu-toggle:focus {
   background-color: #5e3247;
   outline: none;
 }
-
 
 .menu-toggle span {
   display: block;
@@ -101,9 +92,7 @@ a {
   margin: 4px 0;
   border-radius: 2px;
   transition: all 0.3s ease;
-  
 }
-
 
 /* Animation croix */
 .menu-toggle.active span:nth-child(1) {
@@ -111,13 +100,9 @@ a {
   position: relative;
   top: 7px;
 }
-
-
 .menu-toggle.active span:nth-child(2) {
   opacity: 0;
 }
-
-
 .menu-toggle.active span:nth-child(3) {
   transform: rotate(-45deg);
   position: relative;
@@ -125,7 +110,7 @@ a {
 }
 
 
-/* -------------------- NAV MOBILE -------------------- */
+/* -------------------- NAVIGATION MOBILE -------------------- */
 .nav-menu {
   display: flex;
   flex-direction: column;
@@ -144,11 +129,9 @@ a {
   z-index: 99999;
 }
 
-
 .nav-menu.show {
   transform: translateX(0);
 }
-
 
 .nav-menu a {
   margin: 20px 0;
@@ -159,9 +142,7 @@ a {
   transition: all 0.3s ease;
   outline-offset: 4px;
   font-family: 'Great Vibes', cursive;
-  margin-top: 0%;
 }
-
 
 .nav-menu a:hover,
 .nav-menu a:focus {
@@ -169,7 +150,6 @@ a {
   transform: translateX(4px);
   outline: none;
 }
-
 
 /* Bouton fermer */
 .close-btn {
@@ -182,27 +162,34 @@ a {
   color: #a1446c7d;
   cursor: pointer;
   transition: color 0.3s ease;
-  margin-top: 0%;
 }
-
 
 .close-btn:hover,
 .close-btn:focus {
   color: #44093be0;
   outline: none;
-  background: none;
 }
 
 
 /* ------------------- RESPONSIVE ------------------- */
 @media (max-width: 768px) {
   .nav-desktop {
-    display: none;
+	display: none;
   }
 
-
   .menu-toggle {
-    display: flex;
+	display: flex;
+  }
+}
+
+@media (min-width: 769px) {
+  .menu-toggle {
+	display: none !important;
+  }
+
+  .nav-menu {
+	display: none !important;
+	transform: translateX(100%) !important;
   }
 }
 
