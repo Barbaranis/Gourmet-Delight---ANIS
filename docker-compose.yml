@@ -1,16 +1,35 @@
 version: "3.8"
 
+
 services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234AZER
+      POSTGRES_DB: gourmetdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gourmet-net
+
+
   backend:
     build: ./backend
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/app
-    environment:
-      - NODE_ENV=development
+    env_file:                       # ✅ Utilisation du .env
+      - ./backend/.env
+    depends_on:
+      - postgres
     networks:
       - gourmet-net
+
 
   frontend:
     build: ./frontend
@@ -25,6 +44,12 @@ services:
     networks:
       - gourmet-net
 
+
+volumes:
+  postgres_data:
+
+
 networks:
   gourmet-net:
+
 
