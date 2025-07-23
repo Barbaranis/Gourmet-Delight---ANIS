@@ -6,7 +6,7 @@
 /* Slide personnalisée */
 .testimonials .swiper-slide {
   max-width: 87%;
-  margin-left: 10%;
+  margin-left:12%;
   padding: 40px 30px;
   background: linear-gradient(135deg, #f4d9e4, #e6c4cf);
   border-radius: 20px;
@@ -16,6 +16,7 @@
   text-align: center;
   user-select: none;
   letter-spacing: 0.04em;
+
 }
 
 
@@ -95,7 +96,7 @@
 @media (max-width: 768px) {
   .testimonials .swiper-slide {
     padding: 30px 20px;
-    margin-left: 10%;
+    margin-left: 12%;
     width: 90%;
 
   }
