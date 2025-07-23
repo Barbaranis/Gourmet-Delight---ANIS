@@ -1,10 +1,3 @@
-//src/pages/GestionAvis.jsx
-
-
-
-
-
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { db } from '../firebaseClient';
 import {
@@ -15,7 +8,7 @@ import {
   query,
   where
 } from 'firebase/firestore';
-import DOMPurify from 'dompurify'; // 🔐 Sécurité : pour nettoyer les contenus HTML injectés
+import DOMPurify from 'dompurify';
 import '../Style/GestionAvis.css';
 
 
@@ -25,12 +18,16 @@ const GestionAvis = () => {
   const [filtreDate, setFiltreDate] = useState('');
 
 
-  // 🔄 Récupération des témoignages non validés depuis Firestore
+  // 🔄 Récupération des témoignages non validés et non refusés
   const fetchTemoignages = useCallback(async () => {
     try {
       const q = query(collection(db, 'temoignages'), where('validated', '==', false));
       const snapshot = await getDocs(q);
       let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+
+      // ❌ Ne garde pas les refusés
+      data = data.filter(t => !t.refused);
 
 
       // 🔍 Filtres : plat ou date
@@ -54,8 +51,10 @@ const GestionAvis = () => {
   }, [filtrePlat, filtreDate]);
 
 
+  // ⏱️ Déclencher le fetch et marquer comme "vu"
   useEffect(() => {
     fetchTemoignages();
+    localStorage.setItem("temoignages_seen", "true");
   }, [fetchTemoignages]);
 
 
@@ -88,7 +87,6 @@ const GestionAvis = () => {
       <h2>🛡️ Validation des témoignages</h2>
 
 
-      {/* 🔍 Filtres pour trier les témoignages */}
       <div className="filtres">
         <input
           type="text"
@@ -104,7 +102,6 @@ const GestionAvis = () => {
       </div>
 
 
-      {/* 🔎 Liste des témoignages */}
       {temoignages.length === 0 ? (
         <p>Aucun avis en attente.</p>
       ) : (
@@ -117,7 +114,6 @@ const GestionAvis = () => {
               <p><em>Plat : {platConcerné || "Non précisé"}</em></p>
 
 
-              {/* 🔐 Sécurité XSS : Nettoyage du contenu HTML avec DOMPurify */}
               <div
                 className="avis-content"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
@@ -143,4 +139,5 @@ const GestionAvis = () => {
 
 
 export default GestionAvis;
+
 
