@@ -1,76 +1,97 @@
 // 📁 src/controllers/auth.controller.js
 
-const jwt = require('jsonwebtoken');       // 🔐 Gestion des tokens JWT
-const bcrypt = require('bcrypt');          // 🔒 Pour hasher/comparer les mots de passe
-const db = require('../models');           // 📦 Accès aux modèles Sequelize
+
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const db = require('../models');
 const Utilisateur = db.Utilisateur;
 
-const TOKEN_DURATION = '24h';              // ⏱️ Durée du token JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';  // 🔑 Clé secrète pour signer les tokens
+
+// 🔧 Config JWT
+const TOKEN_DURATION = '24h';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
 
 // -----------------------------------------------------
-// 🔐 Contrôleur : Connexion utilisateur (POST /api/auth/login)
+// 🔐 Connexion utilisateur (POST /api/auth/login)
 // -----------------------------------------------------
 exports.login = async (req, res) => {
   try {
-    // ✅ Extraction des données envoyées depuis le frontend
-    const { email, mot_de_passe } = req.body;
+    // ✅ 1) Normalisation des champs
+    const email = (req.body.email || '').trim().toLowerCase();
+    const password =
+      req.body.password ?? req.body.mot_de_passe; // <-- accepte les 2 clés
 
-    // 🔐 Sécurité #1 : Validation des champs requis
-    if (!email || !mot_de_passe) {
+
+    // 🧪 debug minimal (retire-le quand tout est OK)
+    console.log('LOGIN DEBUG -> email:', email, '| hasPwd:', Boolean(password));
+
+
+    // 2) Validation d'entrée
+    if (!email || !password) {
       return res.status(400).json({ message: 'Email et mot de passe requis.' });
     }
 
-    // 🔍 Recherche de l’utilisateur dans la base
-    const user = await Utilisateur.findOne({ where: { email } });
 
-    // 🔐 Sécurité #2 : Vérifie si l’utilisateur existe
+    // 3) Recherche utilisateur (case-insensitive)
+    const user = await Utilisateur.findOne({
+      where: db.Sequelize.where(
+        db.Sequelize.fn('LOWER', db.Sequelize.col('email')),
+        email
+      ),
+    });
+
+
     if (!user) {
       return res.status(401).json({ message: 'Utilisateur non trouvé.' });
     }
 
-    // 🔐 Sécurité #3 : Compare le mot de passe fourni avec le hash stocké
-    const passwordMatch = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
 
-    // 🔐 Sécurité #4 : Refuse si mot de passe invalide
-    if (!passwordMatch) {
+    // 4) Récup du hash (selon le nom de ta colonne)
+    const hash = user.mot_de_passe ?? user.password;
+    if (!hash) {
+      // Cas rare: colonne vide/mauvais nom
+      return res.status(500).json({ message: 'Mot de passe indisponible côté serveur.' });
+    }
+
+
+    // 5) Comparaison bcrypt
+    const ok = await bcrypt.compare(password, hash);
+    console.log('LOGIN DEBUG -> bcrypt.compare =', ok); // debug léger
+    if (!ok) {
       return res.status(401).json({ message: 'Mot de passe incorrect.' });
     }
 
-    // 🔐 Sécurité #5 : Génère un token avec les infos minimales (sans données sensibles)
+
+    // 6) Génération token
     const token = jwt.sign(
-      {
-        id: user.id_utilisateur,
-        email: user.email,
-        role: user.role
-      },
+      { id: user.id_utilisateur ?? user.id, role: user.role },
       JWT_SECRET,
       { expiresIn: TOKEN_DURATION }
     );
 
-    // 🔐 Sécurité #6 : Envoie le token dans un cookie sécurisé (pour prévenir XSS)
+
+    // 7) Cookie httpOnly
     res
       .cookie('token', token, {
-        httpOnly: true,                              // ✅ Inaccessible via JS
-        secure: process.env.NODE_ENV === 'production', // ✅ En HTTPS uniquement en prod
-        sameSite: 'Strict',                          // ✅ Protection contre les requêtes inter-domaines
-        maxAge: 24 * 60 * 60 * 1000                  // ⏱️ 1 jour
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+        maxAge: 24 * 60 * 60 * 1000,
       })
       .status(200)
       .json({
         message: 'Connexion réussie.',
         user: {
-          id: user.id_utilisateur,
+          id: user.id_utilisateur ?? user.id,
           email: user.email,
           role: user.role,
-          prenom: user.prenom
-        }
+          prenom: user.prenom,
+        },
       });
-
   } catch (error) {
-    // 🔐 Sécurité #7 : Gestion propre des erreurs (sans fuite sensible)
     console.error('❌ Erreur login :', error);
     res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
+

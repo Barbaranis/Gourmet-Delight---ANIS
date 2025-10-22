@@ -1,27 +1,29 @@
 // backend/src/config/db.js
-
-
 const { Sequelize } = require('sequelize');
+const path = require('path');
 
 
-// ✅ Chargement du fichier .env depuis la racine du backend
-require('dotenv').config({ path: '../../.env' });
+// ✅ Charge le .env DU BACKEND (un niveau au-dessus de /src)
+require('dotenv').config({
+  path: path.resolve(__dirname, '../../.env'),
+});
 
 
-// ✅ Vérification du mot de passe
+// 🔎 Logs de contrôle
 console.log('🔐 DB_PASSWORD =', process.env.DB_PASSWORD);
-console.log('📦 Type =', typeof process.env.DB_PASSWORD);
+console.log('🌐 DB_HOST =', process.env.DB_HOST);
+console.log('🔌 DB_PORT =', process.env.DB_PORT);
 
 
-// ✅ Connexion Sequelize
+// ✅ Connexion Sequelize (avec valeurs par défaut sûres)
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  process.env.DB_NAME || 'gourmetdb',
+  process.env.DB_USER || 'postgres',
+  process.env.DB_PASSWORD || '',
   {
-    host: process.env.DB_HOST,
+    host: process.env.DB_HOST || 'localhost',
     dialect: 'postgres',
-    port: process.env.DB_PORT || 5432,
+    port: Number(process.env.DB_PORT) || 5432,
     logging: false,
   }
 );
@@ -35,4 +37,5 @@ sequelize
 
 
 module.exports = sequelize;
+
 
