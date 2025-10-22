@@ -1,54 +1,74 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 
 
-// Création du contexte
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+
 export const AuthContext = createContext();
 
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // { id, email, role }
-  const [token, setToken] = useState(null);
+  const [user, setUser]     = useState(null);   // { id, email, role, prenom }
+  const [token, setToken]   = useState(null);   // valeur "sentinelle" car le JWT est en cookie httpOnly
+  const [loading, setLoading] = useState(true);
 
 
-  // Récupération depuis le localStorage
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    const storedToken = localStorage.getItem('token');
-    if (storedUser && storedToken) {
-      setUser(storedUser);
-      setToken(storedToken);
+  // ↻ Récupère l'utilisateur côté serveur via le cookie httpOnly
+  const refreshMe = useCallback(async () => {
+    try {
+      const r = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
+      if (r.ok) {
+        const data = await r.json(); // attendu: { user: {...} }
+        setUser(data.user || data);
+        setToken('cookie'); // on ne lit pas le JWT, on marque juste “authentifié”
+      } else {
+        setUser(null);
+        setToken(null);
+      }
+    } catch {
+      setUser(null);
+      setToken(null);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
 
-  // Connexion
-  const login = (userData, jwtToken) => {
+  useEffect(() => { refreshMe(); }, [refreshMe]);
+
+
+  // Appelé après un login réussi
+  const login = (userData) => {
     setUser(userData);
-    setToken(jwtToken);
+    setToken('cookie');               // le vrai JWT reste en cookie httpOnly
+    // Optionnel: garder un peu d'info en localStorage (jamais le token)
     localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', jwtToken);
   };
 
 
-  // Déconnexion
-  const logout = () => {
+  const logout = async () => {
+    try { await fetch(`${API}/api/auth/logout`, { method: 'POST', credentials: 'include' }); } catch {}
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
   };
 
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, refreshMe }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 
-// ✅ Export du hook personnalisé
 export const useAuth = () => useContext(AuthContext);
+
+
+
+
+
+
 
 
 

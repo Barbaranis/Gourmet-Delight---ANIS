@@ -27,7 +27,7 @@ export default function Menu() {
             description: plat.description,
             price: `${plat.prix}€`,
             image_url: plat.image_url
-              ? `http://localhost:3000/uploads/${plat.image_url}`
+              ? `http://localhost:5000/uploads/${plat.image_url}`
               : null,
           });
         });

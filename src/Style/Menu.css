@@ -134,6 +134,15 @@ nav.menu-tabs {
 
 
 /* ITEM (PLAT) */
+
+
+article.menu-item {
+
+align-items: center;
+
+
+}
+
 .menu-item {
   display: flex;
   align-items: center;

@@ -65,7 +65,7 @@ const NavMenu = () => {
       <nav className="nav-desktop" aria-label="Navigation principale">
         <Link to="/">Accueil</Link>
         <Link to="/menu">Menu</Link>
-        <Link to="/reservation">Rservation</Link>
+        <Link to="/reservation">Reservation</Link>
         <Link to="/chefs">Chefs</Link>
         <Link to="/about">À propos</Link>
         <Link to="/contact">Contact</Link>

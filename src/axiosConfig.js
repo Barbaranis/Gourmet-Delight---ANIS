@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Crée une instance Axios avec une baseURL vers le backend
 const api = axios.create({
-  baseURL: 'http://localhost:3000', 
+  baseURL: 'http://localhost:5000', 
 });
 
 
