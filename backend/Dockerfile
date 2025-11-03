@@ -1,21 +1,28 @@
-# Dockerfile pour le backend
-FROM node:18
+# ---------- Étape 1 : build de l'image Node ----------
+    FROM node:20-alpine
 
 
-WORKDIR /app
-
-
-COPY package*.json ./
-
-
-RUN npm install
-
-
-COPY . .
-
-
-EXPOSE 5000
-
-
-CMD ["node", "src/server.js"]
-
+    # Définir le répertoire de travail
+    WORKDIR /app
+    
+    
+    # Copier les fichiers nécessaires
+    COPY package*.json ./
+    
+    
+    # Installer les dépendances
+    RUN npm install
+    
+    
+    # Copier tout le code source
+    COPY . .
+    
+    
+    # Exposer le port utilisé par ton backend
+    EXPOSE 5000
+    
+    
+    # Lancer le serveur
+    CMD ["npm", "run", "start"]
+    
+    

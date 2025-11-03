@@ -1,9 +1,6 @@
 // src/server.js
 require('dotenv').config();
 
-// ------------------------------
-// Imports
-// ------------------------------
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -21,61 +18,106 @@ console.log(`🌍 ENV : connecté à la base ${process.env.DB_NAME} en tant que 
 // ------------------------------
 // Middlewares globaux (ordre important)
 // ------------------------------
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 app.use(morgan('dev'));
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: '⚠️ Trop de requêtes, réessayez plus tard.',
+  })
+);
 
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: '⚠️ Trop de requêtes, réessayez plus tard.'
-}));
-
-// Parseurs
 app.use(cookieParser());
 app.use(express.json());
-
-// ✅ CORS (frontend Netlify + localhost)
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://gourmet-delight.netlify.app'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'csrf-token', 'x-csrf-token', 'x-xsrf-token'],
-}));
+app.use(express.urlencoded({ extended: true }));
 
 // ------------------------------
-// CSRF
+// ✅ CORS (localhost + Netlify)
 // ------------------------------
-// Secret stocké en cookie ; le token est lu dans l'entête X-CSRF-Token
-const csrfProtection = csrf({
-  cookie: {
-    httpOnly: true,   // non lisible côté front (sécurité)
-    secure: false,    // true en prod HTTPS
-    sameSite: 'Lax',  // 'None' + secure:true si front sur autre domaine en HTTPS
-  },
-  value: (req) => req.get('X-CSRF-Token') || req.get('x-csrf-token') || req.get('x-xsrf-token'),
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://gourmet-delight.netlify.app',
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-CSRF-Token',
+      'csrf-token',
+      'x-csrf-token',
+      'x-xsrf-token',
+      'Cache-Control',
+      'Pragma',
+      'If-None-Match',
+      'If-Modified-Since',
+      'Accept',
+      'Origin',
+    ],
+  })
+);
+// ❌ NE PAS utiliser app.options('*', cors()) (peut casser path-to-regexp)
+
+// (optionnel) anti-cache API pour éviter les 304 sans body
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    res.set({
+      'Cache-Control': 'no-store',
+      Pragma: 'no-cache',
+      Expires: '0',
+    });
+  }
+  next();
 });
 
-// Endpoint pour obtenir un token ET poser le cookie _csrf sur localhost:5000
+// ------------------------------
+// 🔐 CSRF Protection
+// ------------------------------
+const csrfProtection = csrf({
+  cookie: {
+    httpOnly: true,
+    secure: false, // ✅ mettre true en prod (HTTPS)
+    sameSite: 'Lax',
+  },
+  value: (req) =>
+    req.get('X-CSRF-Token') ||
+    req.get('x-csrf-token') ||
+    req.get('x-xsrf-token'),
+});
+
+// Token CSRF (pose aussi le cookie lisible XSRF-TOKEN)
 app.get('/api/csrf-token', csrfProtection, (req, res) => {
   const token = req.csrfToken();
-  // Cookie lisible pour debug (facultatif)
-  res.cookie('XSRF-TOKEN', token, { httpOnly: false, sameSite: 'Lax', secure: false });
+  res.cookie('XSRF-TOKEN', token, {
+    httpOnly: false,
+    sameSite: 'Lax',
+    secure: false,
+  });
   res.json({ csrfToken: token });
 });
 
-// N'appliquer CSRF qu'aux méthodes qui modifient l'état
+// Appliquer CSRF seulement aux méthodes “dangereuses”
 const requireCsrfForUnsafeMethods = (req, res, next) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   return csrfProtection(req, res, next);
 };
 
 // ------------------------------
-// Fichiers statiques (ex : images plats)
+// 📁 Fichiers statiques (images uploadées)
 // ------------------------------
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ------------------------------
-// ROUTES API
+// 🚦 Routes API
 // ------------------------------
 app.use('/api/auth', requireCsrfForUnsafeMethods, require('./routes/auth.routes'));
 app.use('/api/plats', requireCsrfForUnsafeMethods, require('./routes/plat.routes'));
@@ -83,7 +125,7 @@ app.use('/api/utilisateurs', requireCsrfForUnsafeMethods, require('./routes/util
 app.use('/api/contact', requireCsrfForUnsafeMethods, require('./routes/contact'));
 
 // ------------------------------
-// Handler d'erreurs CSRF (après les routes)
+// ⚠️ Gestion des erreurs CSRF
 // ------------------------------
 app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
@@ -93,14 +135,13 @@ app.use((err, req, res, next) => {
 });
 
 // ------------------------------
-// Test
+// Health & ping
 // ------------------------------
-app.get('/', (req, res) => {
-  res.send('✅ Serveur backend actif 🍽️');
-});
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/', (_req, res) => res.send('✅ Serveur backend actif 🍽️'));
 
 // ------------------------------
-// Start serveur
+// 🚀 Lancement du serveur
 // ------------------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {

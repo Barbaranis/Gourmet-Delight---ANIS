@@ -1,3 +1,4 @@
+// 📁 src/controllers/plat.controller.js
 const db = require('../models');
 const Plat = db.Plat;
 const Categorie = db.Categorie;
@@ -42,45 +43,47 @@ exports.createPlat = async (req, res) => {
       description,
       prix: prixFloat,
       image_url,
-      id_categorie: categorieId
+      id_categorie: categorieId,
     });
 
 
-    console.log("🧾 Plat créé :", plat);
-
-
-    // Vérification de l'ID
-    const idPlat = plat.id_plat || plat.id; // au cas où Sequelize utiliserait "id" au lieu de "id_plat"
+    // ID Sequelize
+    const idPlat = plat.id_plat || plat.id;
     if (!idPlat) {
       return res.status(500).json({ message: "Erreur : ID du plat introuvable après création." });
     }
 
 
-    await firestore.collection('plats').doc(idPlat.toString()).set({
-      nom,
-      description,
-      prix: prixFloat,
-      image_url,
-      id_categorie: categorieId,
-      createdAt: new Date().toISOString()
-    });
+    // 🔁 Firestore : création (indépendante)
+    try {
+      await firestore.collection('plats').doc(idPlat.toString()).set({
+        nom,
+        description,
+        prix: prixFloat,
+        image_url,
+        id_categorie: categorieId,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn('⚠️ Firestore create ignoré :', e.message);
+    }
 
 
-    res.status(201).json(plat);
+    return res.status(201).json(plat);
   } catch (err) {
     console.error("❌ Erreur serveur createPlat:", err);
-    res.status(500).json({ message: "Erreur création plat", error: err.message });
+    return res.status(500).json({ message: "Erreur création plat", error: err.message });
   }
 };
 
 
 // ✅ Lire tous les plats
-exports.getAllPlats = async (req, res) => {
+exports.getAllPlats = async (_req, res) => {
   try {
     const plats = await Plat.findAll();
-    res.status(200).json(plats);
+    return res.status(200).json(plats);
   } catch (err) {
-    res.status(500).json({ message: "Erreur récupération plats", error: err.message });
+    return res.status(500).json({ message: "Erreur récupération plats", error: err.message });
   }
 };
 
@@ -108,40 +111,52 @@ exports.updatePlat = async (req, res) => {
     let image_url = plat.image_url;
 
 
+    // 📷 Nouvelle image ?
     if (req.file) {
-      const oldImagePath = path.join(__dirname, '..', 'uploads', plat.image_url);
-      fs.unlink(oldImagePath, (err) => {
-        if (err) console.warn("⚠️ Erreur suppression ancienne image :", err.message);
-      });
+      // supprime l'ancienne si elle existe
+      if (plat.image_url) {
+        const oldImagePath = path.join(__dirname, '..', 'uploads', plat.image_url);
+        fs.unlink(oldImagePath, (err) => {
+          if (err) console.warn("⚠️ Erreur suppression ancienne image :", err.message);
+        });
+      }
       image_url = req.file.filename;
     }
 
 
-    await Plat.update({
-      nom,
-      description,
-      prix: prixFloat,
-      image_url,
-      id_categorie: categorieId
-    }, {
-      where: { id_plat: id }
-    });
+    // 🔄 Update SQL
+    await Plat.update(
+      { nom, description, prix: prixFloat, image_url, id_categorie: categorieId },
+      { where: { id_plat: id } }
+    );
 
 
-    await firestore.collection('plats').doc(id.toString()).update({
-      nom,
-      description,
-      prix: prixFloat,
-      image_url,
-      id_categorie: categorieId,
-      updatedAt: new Date().toISOString()
-    });
+    // Récupérer l'objet à jour pour renvoyer au front
+    const updated = await Plat.findByPk(id);
 
 
-    res.status(200).json({ message: "Plat mis à jour avec succès." });
+    // 🔁 Firestore : set merge (crée si absent, met à jour sinon)
+    try {
+      await firestore.collection('plats').doc(id.toString()).set(
+        {
+          nom,
+          description,
+          prix: prixFloat,
+          image_url,
+          id_categorie: categorieId,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (e) {
+      console.warn('⚠️ Firestore update ignoré :', e.message);
+    }
+
+
+    return res.status(200).json({ message: "Plat mis à jour avec succès.", plat: updated });
   } catch (err) {
     console.error("❌ Erreur updatePlat:", err);
-    res.status(500).json({ message: "Erreur mise à jour plat", error: err.message });
+    return res.status(500).json({ message: "Erreur mise à jour plat", error: err.message });
   }
 };
 
@@ -156,20 +171,31 @@ exports.deletePlat = async (req, res) => {
     }
 
 
-    const imagePath = path.join(__dirname, '..', 'uploads', plat.image_url);
-    fs.unlink(imagePath, (err) => {
-      if (err) console.warn("⚠️ Image non supprimée :", err.message);
-    });
+    // 🧹 Supprimer l'image si présente
+    if (plat.image_url) {
+      const imagePath = path.join(__dirname, '..', 'uploads', plat.image_url);
+      fs.unlink(imagePath, (err) => {
+        if (err) console.warn("⚠️ Image non supprimée :", err.message);
+      });
+    }
 
 
+    // SQL
     await Plat.destroy({ where: { id_plat: id } });
-    await firestore.collection('plats').doc(id.toString()).delete();
 
 
-    res.status(200).json({ message: "Plat supprimé avec succès." });
+    // Firestore (indépendant)
+    try {
+      await firestore.collection('plats').doc(id.toString()).delete();
+    } catch (e) {
+      console.warn('⚠️ Firestore delete ignoré :', e.message);
+    }
+
+
+    return res.status(200).json({ message: "Plat supprimé avec succès." });
   } catch (err) {
     console.error("❌ Erreur deletePlat:", err);
-    res.status(500).json({ message: "Erreur suppression plat", error: err.message });
+    return res.status(500).json({ message: "Erreur suppression plat", error: err.message });
   }
 };
 
