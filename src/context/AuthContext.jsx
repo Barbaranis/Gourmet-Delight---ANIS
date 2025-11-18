@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 
 
@@ -8,19 +9,28 @@ export const AuthContext = createContext();
 
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser]     = useState(null);   // { id, email, role, prenom }
-  const [token, setToken]   = useState(null);   // valeur "sentinelle" car le JWT est en cookie httpOnly
+  const [user, setUser] = useState(null);     // { id, email, role, prenom }
+  const [token, setToken] = useState(null);   // marqueur; le JWT est en cookie httpOnly
   const [loading, setLoading] = useState(true);
 
 
-  // ↻ Récupère l'utilisateur côté serveur via le cookie httpOnly
+  // --- récupère un token CSRF et le renvoie
+  const ensureCsrf = useCallback(async () => {
+    const r = await fetch(`${API}/api/csrf-token`, { credentials: 'include' });
+    if (!r.ok) throw new Error('CSRF fetch failed');
+    const { csrfToken } = await r.json();
+    return csrfToken;
+  }, []);
+
+
+  // ↻ Récupère l'utilisateur (cookie httpOnly)
   const refreshMe = useCallback(async () => {
     try {
       const r = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
       if (r.ok) {
-        const data = await r.json(); // attendu: { user: {...} }
+        const data = await r.json();
         setUser(data.user || data);
-        setToken('cookie'); // on ne lit pas le JWT, on marque juste “authentifié”
+        setToken('cookie');
       } else {
         setUser(null);
         setToken(null);
@@ -37,20 +47,31 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => { refreshMe(); }, [refreshMe]);
 
 
-  // Appelé après un login réussi
   const login = (userData) => {
     setUser(userData);
-    setToken('cookie');               // le vrai JWT reste en cookie httpOnly
-    // Optionnel: garder un peu d'info en localStorage (jamais le token)
+    setToken('cookie');
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
 
   const logout = async () => {
-    try { await fetch(`${API}/api/auth/logout`, { method: 'POST', credentials: 'include' }); } catch {}
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('user');
+    try {
+      const csrfToken = await ensureCsrf(); // ← important
+      await fetch(`${API}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-CSRF-Token': csrfToken,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (e) {
+      // optionnel: console.warn(e);
+    } finally {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('user');
+    }
   };
 
 
@@ -63,14 +84,4 @@ export const AuthProvider = ({ children }) => {
 
 
 export const useAuth = () => useContext(AuthContext);
-
-
-
-
-
-
-
-
-
-
 

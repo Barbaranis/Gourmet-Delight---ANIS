@@ -4,7 +4,7 @@
 import '../Style/Reservation.css';
 import { db } from '../firebaseClient';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import DOMPurify from 'dompurify'; // 🛡️ Protection XSS
+import DOMPurify from 'dompurify'; //  Protection XSS
 import CookieBanner from '../components/CookieBanner';
 
 

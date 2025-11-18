@@ -105,6 +105,9 @@ const Home = () => {
 
 
       {/* 📌 SECTION INTRO */}
+     
+     
+     
       <section
         className={`intro fade-in ${visibleSections.intro > 0.3 ? 'visible' : ''}`}
         ref={introRef}
@@ -115,6 +118,7 @@ const Home = () => {
           <p dangerouslySetInnerHTML={{ __html: contenu.accueilIntroTexte }} />
         </div>
       </section>
+    
 
 
       {/* 🍽️ SECTION SPÉCIALITÉS */}
@@ -136,8 +140,8 @@ const Home = () => {
             <div className="specialty-card">
               <img src={vinsImage} alt="Sélection de vins gastronomiques" className="specialty-img" />
               <div className="specialty-content">
-                <h3>Sélection de Vins</h3>
-                <p>Une carte des vins soigneusement sélectionnée pour accompagner chaque moment culinaire.</p>
+                <h3>Sélection des boissons</h3>
+                <p>Une carte des boissons soigneusement sélectionnée pour accompagner chaque moment culinaire.</p>
               </div>
             </div>
             <div className="specialty-card">
@@ -156,6 +160,7 @@ const Home = () => {
 
 
       {/* 🗓️ SECTION RÉSERVATION */}
+
       <section
         className={`reservation fade-in ${visibleSections.reservation > 0.3 ? 'visible' : ''}`}
         ref={reservationRef}

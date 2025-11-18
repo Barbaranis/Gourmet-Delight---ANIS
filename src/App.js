@@ -22,8 +22,6 @@ import CGUCGV from './pages/CGUCGV';
 import RegistreRGPD from './pages/RegistreRGPD.jsx';
 
 
-
-
 // 🔐 Dashboards (admin + employés)
 import DashboardAdmin from './pages/DashboardAdmin.jsx';
 import GestionEmployes from './pages/GestionEmployes.jsx';
@@ -65,24 +63,31 @@ function App() {
   const location = useLocation();
 
 
-  // 🔒 Redirection automatique selon rôle utilisateur
+  // ✅ Redirection unique après login
   useEffect(() => {
-    if (token && user?.role) {
-      switch (user.role) {
-        case 'admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'maitre_hotel':
-        case 'chef_cuisine':
-        case 'gestionnaire_contenu':
-        case 'responsable_salle':
-          navigate('/employe/dashboard');
-          break;
-        default:
-          navigate('/');
-      }
+    if (!token || !user?.role) return;
+
+
+    // Si on est déjà sur la bonne page, on ne redirige pas
+    if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/employe')) {
+      return;
     }
-  }, [token, user, navigate]);
+
+
+    switch (user.role) {
+      case 'admin':
+        navigate('/admin/dashboard', { replace: true });
+        break;
+      case 'maitre_hotel':
+      case 'chef_cuisine':
+      case 'gestionnaire_contenu':
+      case 'responsable_salle':
+        navigate('/employe/dashboard', { replace: true });
+        break;
+      default:
+        navigate('/', { replace: true });
+    }
+  }, [token, user, navigate, location.pathname]);
 
 
   return (
@@ -111,66 +116,45 @@ function App() {
           <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
           <Route path="/mentions-legales" element={<MentionsLegales />} />
           <Route path="/cgu-cgv" element={<CGUCGV />} />
-          <Route path="/Registre-rgpd" element={<RegistreRGPD/>} />
+          <Route path="/registre-rgpd" element={<RegistreRGPD />} />
+
 
           {/* 🔐 Employés */}
           <Route path="/employe/dashboard" element={
-            <ProtectedRoute>
-              <DashboardEmploye />
-            </ProtectedRoute>
+            <ProtectedRoute><DashboardEmploye /></ProtectedRoute>
           } />
 
 
           {/* 🔐 Admin */}
           <Route path="/admin/dashboard" element={
-            <ProtectedRoute>
-              <DashboardAdmin />
-            </ProtectedRoute>
+            <ProtectedRoute><DashboardAdmin /></ProtectedRoute>
           } />
           <Route path="/admin/employes" element={
-            <ProtectedRoute>
-              <GestionEmployes />
-            </ProtectedRoute>
+            <ProtectedRoute><GestionEmployes /></ProtectedRoute>
           } />
           <Route path="/admin/plats" element={
-            <ProtectedRoute>
-              <GestionPlats />
-            </ProtectedRoute>
+            <ProtectedRoute><GestionPlats /></ProtectedRoute>
           } />
           <Route path="/admin/avis" element={
-            <ProtectedRoute>
-              <GestionAvis />
-            </ProtectedRoute>
+            <ProtectedRoute><GestionAvis /></ProtectedRoute>
           } />
           <Route path="/admin/reservations" element={
-            <ProtectedRoute>
-              <GestionReservations />
-            </ProtectedRoute>
+            <ProtectedRoute><GestionReservations /></ProtectedRoute>
           } />
           <Route path="/admin/messages" element={
-            <ProtectedRoute>
-              <GestionMessages />
-            </ProtectedRoute>
+            <ProtectedRoute><GestionMessages /></ProtectedRoute>
           } />
           <Route path="/admin/contenu-site" element={
-            <ProtectedRoute>
-              <ModifierContenuSite />
-            </ProtectedRoute>
+            <ProtectedRoute><ModifierContenuSite /></ProtectedRoute>
           } />
           <Route path="/admin/statistiques" element={
-            <ProtectedRoute>
-              <StatistiquesChefs />
-            </ProtectedRoute>
+            <ProtectedRoute><StatistiquesChefs /></ProtectedRoute>
           } />
           <Route path="/admin/statistiques-par-chef" element={
-            <ProtectedRoute>
-              <StatistiquesParChef />
-            </ProtectedRoute>
+            <ProtectedRoute><StatistiquesParChef /></ProtectedRoute>
           } />
           <Route path="/admin/statistiques-reservations" element={
-            <ProtectedRoute>
-              <StatistiquesReservations />
-            </ProtectedRoute>
+            <ProtectedRoute><StatistiquesReservations /></ProtectedRoute>
           } />
 
 
